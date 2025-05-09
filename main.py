@@ -13,10 +13,10 @@ DATA_FILE = "secure_data.json"
 SALT = b"secure-salt_value"
 LOCKOUT_DURATION = 60
 
-if "uthenticated_user" not in st.session_state:
-    st.session_state.uthenticated_user = None
+if "authenticated_user" not in st.session_state:
+    st.session_state.authenticated_user = None
 
-if "failed_sttempts" not in st.session_state:
+if "failed_attempts" not in st.session_state:
     st.session_state.failed_attempts = 0
 
 if "lockout_time" not in st.session_state:
@@ -26,7 +26,7 @@ def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
             return json.load(f)
-        return {}
+    return {}
     
 def save_data(data):
     with open(DATA_FILE, "w") as f:
@@ -85,33 +85,32 @@ elif choice == "Register":
         else:
             st.error("Both Fields are required")
 
-    elif choice == "Login":
-        st.subheader("🗝️ User Login")
+elif choice == "Login":
+    st.subheader("🗝️ User Login")
 
-        if time.time() < st.session_state.lockout_time:
-            remaining = int(st.session_state.lockout_time - time.time())
-            st.error(f"Too many failed attempts . please wait {remaining} seconds.")
-            st.stop()
+    if time.time() < st.session_state.lockout_time:
+        remaining = int(st.session_state.lockout_time - time.time())
+        st.error(f"Too many failed attempts . please wait {remaining} seconds.")
+        st.stop()
 
-        userName = st.text_input("Username")
-        password = st.text_input("password", type="password")
+    userName = st.text_input("Username")
+    password = st.text_input("password", type="password")
 
-        if st.button("Login"):
-            if userName in stored_data and stored_data[userName]["password"] == hash_password(password):
-                st.session_state.authenticated_user = userName
-                st.session_state.failed_attempts = 0
-                st.success(f"Welcome {userName} 😊")
+    if st.button("Login"):
+        if userName in stored_data and stored_data[userName]["password"] == hash_password(password):
+            st.session_state.authenticated_user = userName
+            st.session_state.failed_attempts = 0
+            st.success(f"Welcome {userName} 😊")
 
-            else:
-                st.session_state.failed_attempts += 1
-                remaining = 3 - st.session_state.failed_attempts
-                st.error(f"❌ Invalid Credentials! Attempts remaining {remaining}")
+        else:
+            st.session_state.failed_attempts += 1
+            remaining = 3 - st.session_state.failed_attempts
+            st.error(f"❌ Invalid Credentials! Attempts remaining {remaining}")
 
-                if st.session_state.failed_attempts >= 3:
-                    st.session_state.lockout_time = time.time() + LOCKOUT_DURATION
-                    st.error(f"Too many failed attempts. lock out time is 60 seconds")
-                    st.stop()
-
+            if st.session_state.failed_attempts >= 3:
+                st.session_state.lockout_time = time.time() + LOCKOUT_DURATION
+                st.error(f"Too many failed attempts. lock out time is 60 seconds")
+                st.stop()
 
 elif choice == "Store Data":
     if not st.session_state.authenticated_user:
